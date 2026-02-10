@@ -625,6 +625,16 @@ function cleanAuthors(authorStr) {
 // MAIN FORMAT FUNCTION
 // ========================================
 function formatReference(raw) {
+  // Extract leading number if present (e.g., "1.", "12.", "3)")
+  let prefix = '';
+  const numMatch = raw.match(/^(\s*\d+[\.\)\]:][\s\t]*)/);
+  if (numMatch) {
+    prefix = numMatch[1].replace(/\t/g, ' ').replace(/\s+$/, ' ');
+    // Normalize to "N. " format
+    const num = prefix.match(/(\d+)/)[1];
+    prefix = num + '.\t';
+  }
+
   let ref = stripNumbering(raw).trim();
   if (!ref) return '';
 
@@ -726,6 +736,11 @@ function formatReference(raw) {
   // Remove trailing period after DOI
   if (/doi:10\.\S+\.$/.test(ref)) {
     ref = ref.replace(/\.$/, '');
+  }
+
+  // Re-add numbering prefix if it was present
+  if (prefix) {
+    ref = prefix + ref;
   }
 
   return ref;
