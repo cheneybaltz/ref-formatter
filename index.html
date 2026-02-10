@@ -695,8 +695,8 @@ function formatReference(raw) {
     title = toSentenceCase(title);
 
     // Try to find and italicize journal name at the start of rest
-    // Journal is text before a year (4 digits) or before a semicolon
-    let journalMatch = rest.match(/^([A-Za-z][A-Za-z\s&\-:,]+?)\.?\s*(?=\d{4}|;|\s*__URL__|\s*$)/);
+    // Journal is text before a year (4 digits), a volume number, a semicolon, or end
+    let journalMatch = rest.match(/^([A-Za-z][A-Za-z\s&\-:,]+?)\.?\s*(?=\d{4}|\d{1,3}\(|;|\s*__URL__|\s*$)/);
     if (journalMatch && journalMatch[1].trim().length > 1) {
       let journalName = abbreviateJournal(journalMatch[1].trim());
       let afterJournal = rest.slice(journalMatch[0].length).trim();
@@ -762,31 +762,8 @@ function formatRefs() {
 
   document.getElementById('clearBtn').classList.remove('hidden');
 
-  // Split into individual references
-  // Strategy: if input has numbered lines, use numbers as delimiters
-  // Otherwise, treat each non-empty line as a separate reference
-  const lines = input.split(/\n/).filter(l => l.trim());
-  const hasNumbering = lines.some(l => /^\s*\d+[\.\)\]]\s/.test(l));
-  
-  const refs = [];
-  if (hasNumbering) {
-    // Numbered mode: group lines that don't start with a number with the previous one
-    let current = '';
-    for (const line of lines) {
-      if (/^\s*\d+[\.\)\]]\s/.test(line) && current) {
-        refs.push(current.trim());
-        current = line;
-      } else {
-        current += (current ? ' ' : '') + line;
-      }
-    }
-    if (current.trim()) refs.push(current.trim());
-  } else {
-    // Unnumbered mode: each line is its own reference
-    for (const line of lines) {
-      refs.push(line.trim());
-    }
-  }
+  // Every line is its own reference
+  const refs = input.split(/\n/).map(l => l.trim()).filter(l => l);
 
   const formatted = refs.map(r => formatReference(r)).filter(r => r);
   rawOutput = formatted.join('\n\n');
