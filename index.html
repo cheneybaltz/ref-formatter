@@ -165,6 +165,8 @@
       margin-bottom: 14px;
       color: var(--text);
       word-break: break-word;
+      padding-left: 2.5em;
+      text-indent: -2.5em;
     }
     .output-box p:last-child { margin-bottom: 0; }
     .output-box i { font-style: italic; }
@@ -632,7 +634,7 @@ function formatReference(raw) {
     prefix = numMatch[1].replace(/\t/g, ' ').replace(/\s+$/, ' ');
     // Normalize to "N. " format
     const num = prefix.match(/(\d+)/)[1];
-    prefix = num + '.\t';
+    prefix = num + '. ';
   }
 
   let ref = stripNumbering(raw).trim();
@@ -838,3 +840,4 @@ function clearAll() {
 
 </body>
 </html>
+
