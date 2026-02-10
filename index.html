@@ -165,8 +165,6 @@
       margin-bottom: 14px;
       color: var(--text);
       word-break: break-word;
-      padding-left: 2.5em;
-      text-indent: -2.5em;
     }
     .output-box p:last-child { margin-bottom: 0; }
     .output-box i { font-style: italic; }
@@ -765,21 +763,30 @@ function formatRefs() {
   document.getElementById('clearBtn').classList.remove('hidden');
 
   // Split into individual references
-  // Split on newlines that start with a number, or double newlines
+  // Strategy: if input has numbered lines, use numbers as delimiters
+  // Otherwise, treat each non-empty line as a separate reference
   const lines = input.split(/\n/).filter(l => l.trim());
+  const hasNumbering = lines.some(l => /^\s*\d+[\.\)\]]\s/.test(l));
+  
   const refs = [];
-  let current = '';
-
-  for (const line of lines) {
-    // If line starts with a number + period/tab, it's a new reference
-    if (/^\s*\d+[\.\)\]]\s/.test(line) && current) {
-      refs.push(current.trim());
-      current = line;
-    } else {
-      current += (current ? ' ' : '') + line;
+  if (hasNumbering) {
+    // Numbered mode: group lines that don't start with a number with the previous one
+    let current = '';
+    for (const line of lines) {
+      if (/^\s*\d+[\.\)\]]\s/.test(line) && current) {
+        refs.push(current.trim());
+        current = line;
+      } else {
+        current += (current ? ' ' : '') + line;
+      }
+    }
+    if (current.trim()) refs.push(current.trim());
+  } else {
+    // Unnumbered mode: each line is its own reference
+    for (const line of lines) {
+      refs.push(line.trim());
     }
   }
-  if (current.trim()) refs.push(current.trim());
 
   const formatted = refs.map(r => formatReference(r)).filter(r => r);
   rawOutput = formatted.join('\n\n');
@@ -840,4 +847,5 @@ function clearAll() {
 
 </body>
 </html>
+
 
