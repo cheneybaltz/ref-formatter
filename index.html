@@ -519,6 +519,7 @@ function abbreviateJournal(name) {
 // ========================================
 function fixPageRange(text) {
   // Only replace hyphens between page-like numbers (not inside DOIs or URLs)
+  // Strategy: only replace hyphens with hypens
   // We do this BEFORE DOI extraction would be ideal, but we need to be careful
   // Strategy: only replace N-N patterns that look like page ranges (both sides short numbers)
   // and NOT inside URLs or DOIs
