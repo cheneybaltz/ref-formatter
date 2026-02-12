@@ -496,7 +496,7 @@ function formatDoi(text) {
 // ========================================
 function formatSupplement(text) {
   return text
-    // Handle all variations and convert to (suppl N)
+    // Handle all variations and convert to (suppl N) - only in parentheses
     .replace(/\((\d+)_suppl\)/g, '(suppl $1)')
     .replace(/\((\d+)\s*[Ss]upplement\)/g, '(suppl $1)')
     .replace(/\([Ss]upplement\s*(\d+)\)/g, '(suppl $1)')
