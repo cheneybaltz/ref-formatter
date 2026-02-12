@@ -500,7 +500,8 @@ function formatSupplement(text) {
     .replace(/\((\d+)\s*[Ss]upplement\)/g, '(suppl $1)')
     .replace(/\([Ss]upplement\s*(\d+)\)/g, '(suppl $1)')
     .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)')
-    .replace(/\([Ss]uppl\s*(\d+)\)/g, '(suppl $1)');
+    .replace(/\([Ss]uppl\s*(\d+)\)/g, '($1 suppl)')
+    .replace(/\((\d+)_suppl\)/g, '(suppl $1)');
 }
 
 // ========================================
@@ -519,6 +520,7 @@ function abbreviateJournal(name) {
 // ========================================
 function fixPageRange(text) {
   // Only replace hyphens between page-like numbers (not inside DOIs or URLs)
+  // Strategy: only replace hyphens with hypens
   // We do this BEFORE DOI extraction would be ideal, but we need to be careful
   // Strategy: only replace N-N patterns that look like page ranges (both sides short numbers)
   // and NOT inside URLs or DOIs
@@ -658,7 +660,7 @@ function formatReference(raw) {
   ref = noDoi;
 
   // Now safe to fix page ranges (DOI and URL removed)
-  ref = fixPageRange(ref);
+  // ref = fixPageRange(ref); // Commented out to keep hyphens instead of en dashes
 
   if (web) {
     ref = formatWebDates(ref);
