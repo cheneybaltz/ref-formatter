@@ -526,6 +526,11 @@ function fixPageRange(text) {
   return text.replace(/(?<![\/\d.])(\d{1,5})\s*-\s*(\d{1,5})(?![\/\d])/g, '$1–$2');
 }
 
+// Convert en dashes back to hyphens in page ranges
+function enDashToHyphen(text) {
+  return text.replace(/(\d{1,5})\s*–\s*(\d{1,5})/g, '$1-$2');
+}
+
 // ========================================
 // STRIP DATE FROM JOURNAL REFERENCE
 // Removes patterns like "2011 Oct 22" or "Oct 22, 2011" leaving just year
@@ -660,6 +665,7 @@ function formatReference(raw) {
 
   // Now safe to fix page ranges (DOI and URL removed)
   // ref = fixPageRange(ref); // Commented out to keep hyphens instead of en dashes
+  ref = enDashToHyphen(ref); // Convert any en dashes to hyphens
 
   if (web) {
     ref = formatWebDates(ref);
@@ -825,5 +831,3 @@ function clearAll() {
 
 </body>
 </html>
-
-
