@@ -502,6 +502,7 @@ function formatSupplement(text) {
     .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)')
     .replace(/\([Ss]uppl\s*(\d+)\)/g, '(suppl $1)');
     .replace(/\([Ss]uppl\s*(\d+)\)/g, '($1 suppl)');
+    .replace(/\((\d+)_suppl\)/g, '(suppl $1)');
 }
 
 // ========================================
