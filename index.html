@@ -495,13 +495,12 @@ function formatDoi(text) {
 // SUPPLEMENT FORMATTING
 // ========================================
 function formatSupplement(text) {
-  // (2 Supplement) → (suppl 2)
   return text
+    // Handle all variations and convert to (suppl N)
+    .replace(/\((\d+)_suppl\)/g, '(suppl $1)')
     .replace(/\((\d+)\s*[Ss]upplement\)/g, '(suppl $1)')
     .replace(/\([Ss]upplement\s*(\d+)\)/g, '(suppl $1)')
-    .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)')
-    .replace(/\([Ss]uppl\s*(\d+)\)/g, '($1 suppl)')
-    .replace(/\((\d+)_suppl\)/g, '(suppl $1)');
+    .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)');
 }
 
 // ========================================
