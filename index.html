@@ -495,12 +495,12 @@ function formatDoi(text) {
 // SUPPLEMENT FORMATTING
 // ========================================
 function formatSupplement(text) {
+  // (2 Supplement) → (suppl 2)
   return text
-    // Handle all variations and convert to (suppl N) - only in parentheses
-    .replace(/\((\d+)_suppl\)/g, '(suppl $1)')
     .replace(/\((\d+)\s*[Ss]upplement\)/g, '(suppl $1)')
     .replace(/\([Ss]upplement\s*(\d+)\)/g, '(suppl $1)')
-    .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)');
+    .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)')
+    .replace(/\([Ss]uppl\s*(\d+)\)/g, '(suppl $1)');
 }
 
 // ========================================
@@ -519,16 +519,10 @@ function abbreviateJournal(name) {
 // ========================================
 function fixPageRange(text) {
   // Only replace hyphens between page-like numbers (not inside DOIs or URLs)
-  // Strategy: only replace hyphens with hypens
   // We do this BEFORE DOI extraction would be ideal, but we need to be careful
   // Strategy: only replace N-N patterns that look like page ranges (both sides short numbers)
   // and NOT inside URLs or DOIs
   return text.replace(/(?<![\/\d.])(\d{1,5})\s*-\s*(\d{1,5})(?![\/\d])/g, '$1–$2');
-}
-
-// Convert en dashes back to hyphens in page ranges
-function enDashToHyphen(text) {
-  return text.replace(/(\d{1,5})\s*–\s*(\d{1,5})/g, '$1-$2');
 }
 
 // ========================================
@@ -664,8 +658,7 @@ function formatReference(raw) {
   ref = noDoi;
 
   // Now safe to fix page ranges (DOI and URL removed)
-  // ref = fixPageRange(ref); // Commented out to keep hyphens instead of en dashes
-  ref = enDashToHyphen(ref); // Convert any en dashes to hyphens
+  ref = fixPageRange(ref);
 
   if (web) {
     ref = formatWebDates(ref);
