@@ -525,6 +525,23 @@ function fixPageRange(text) {
   return text.replace(/(?<![\/\d.])(\d{1,5})\s*-\s*(\d{1,5})(?![\/\d])/g, '$1–$2');
 }
 
+function fixPageRange(text) {
+  // Matches patterns like 900-02 or 1234-45
+  return text.replace(/(?<![\/\d.])(\d{1,5})\s*-\s*(\d{1,5})(?![\/\d])/g, (match, p1, p2) => {
+    let start = p1;
+    let end = p2;
+
+    // If the second number is shorter than the first, it's an abbreviated range
+    if (end.length < start.length) {
+      // Take the prefix from the start number and append the end digits
+      const prefix = start.substring(0, start.length - end.length);
+      end = prefix + end;
+    }
+
+    return start + '–' + end; // Returns with the proper en-dash (–)
+  });
+}
+
 // ========================================
 // STRIP DATE FROM JOURNAL REFERENCE
 // Removes patterns like "2011 Oct 22" or "Oct 22, 2011" leaving just year
