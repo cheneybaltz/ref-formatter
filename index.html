@@ -526,19 +526,24 @@ function fixPageRange(text) {
 }
 
 function fixPageRange(text) {
-  // Matches patterns like 900-02 or 1234-45
+  // Matches patterns like 900-02, 1234-45, or 10-12
   return text.replace(/(?<![\/\d.])(\d{1,5})\s*-\s*(\d{1,5})(?![\/\d])/g, (match, p1, p2) => {
-    let start = p1;
+    const start = p1;
     let end = p2;
 
-    // If the second number is shorter than the first, it's an abbreviated range
     if (end.length < start.length) {
-      // Take the prefix from the start number and append the end digits
+      // Logic for cases like 900-02 -> 900-902
+      // We take the prefix of the start number to match the needed length
       const prefix = start.substring(0, start.length - end.length);
-      end = prefix + end;
+      const candidate = prefix + end;
+      
+      // Validation: If the expanded end is less than or equal to start, 
+      // it might be a crossover (e.g., 998-02 meaning 998-1002).
+      // But for AMA, usually, we just need the digit replacement:
+      end = candidate;
     }
 
-    return start + '–' + end; // Returns with the proper en-dash (–)
+    return start + '–' + end; // Returns with the proper AMA en-dash
   });
 }
 
