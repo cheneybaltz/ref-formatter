@@ -261,6 +261,7 @@
       <li>Supplements formatted as (suppl N)</li>
       <li>Trial names kept ALL CAPS (e.g., KEYNOTE, PACIFIC)</li>
       <li>Standard NLM journal abbreviations applied</li>
+      <li>Abbreviated page ranges expanded (e.g., 927-33 → 927-933)</li>
     </ul>
     <div class="note">
       This tool uses rule-based formatting (no AI). It handles the most common reference patterns well. For unusual or complex references, double-check the output.
@@ -417,12 +418,10 @@ function toSentenceCase(title) {
   });
 
   // Split on sentence-boundary punctuation within title
-  // We handle : ? . — (em-dash) as reset points
   const parts = t.split(/(?<=[:.?])\s+|(?<=—)\s*/);
 
   const result = parts.map((part, idx) => {
     return part.split(/(\s+)/).map((word, wIdx) => {
-      // Skip placeholders
       if (word.startsWith('\x00PROT')) return word;
       if (/^\s+$/.test(word)) return word;
 
@@ -468,11 +467,9 @@ function toSentenceCase(title) {
 // DOI FORMATTING
 // ========================================
 function formatDoi(text) {
-  // Extract DOI
   let doi = '';
   let rest = text;
 
-  // Match various DOI patterns
   const doiPatterns = [
     /(?:Available from:\s*)?(?:https?:\/\/)?(?:dx\.)?doi\.org\/(10\.\S+)/i,
     /doi:\s*(10\.\S+)/i,
@@ -496,7 +493,6 @@ function formatDoi(text) {
 // ========================================
 function formatSupplement(text) {
   return text
-    // Handle all variations and convert to (suppl N) - only in parentheses
     .replace(/\((\d+)_suppl\)/g, '(suppl $1)')
     .replace(/\((\d+)\s*[Ss]upplement\)/g, '(suppl $1)')
     .replace(/\([Ss]upplement\s*(\d+)\)/g, '(suppl $1)')
@@ -510,25 +506,27 @@ function abbreviateJournal(name) {
   const cleaned = name.trim().replace(/\.$/, '');
   const key = cleaned.toLowerCase();
   if (JOURNAL_ABBREVS[key]) return JOURNAL_ABBREVS[key];
-  // Return as-is if not in our map (might already be abbreviated)
   return cleaned;
 }
 
 // ========================================
-// PAGE RANGE: hyphen to hyphen
+// PAGE RANGE: convert en dashes to hyphens
 // ========================================
-function fixPageRange(text) {
-  // Only replace hyphens between page-like numbers (not inside DOIs or URLs)
-  // Strategy: only replace hyphens with hypens
-  // We do this BEFORE DOI extraction would be ideal, but we need to be careful
-  // Strategy: only replace N-N patterns that look like page ranges (both sides short numbers)
-  // and NOT inside URLs or DOIs
-  return text.replace(/(?<![\/\d.])(\d{1,5})\s*-\s*(\d{1,5})(?![\/\d])/g, '$1–$2');
-}
-
-// Convert en dashes back to hyphens in page ranges
 function enDashToHyphen(text) {
   return text.replace(/(\d{1,5})\s*–\s*(\d{1,5})/g, '$1-$2');
+}
+
+// ========================================
+// PAGE RANGE EXPANSION: 927-33 → 927-933
+// ========================================
+function expandPageRange(text) {
+  return text.replace(/(\d{2,5})-(\d{1,4})(?=\D|$)/g, (match, start, end) => {
+    // If end is already as long or longer than start, it's already fully written
+    if (end.length >= start.length) return match;
+    // Take the prefix from start that end is missing
+    const prefix = start.slice(0, start.length - end.length);
+    return start + '-' + prefix + end;
+  });
 }
 
 // ========================================
@@ -537,11 +535,11 @@ function enDashToHyphen(text) {
 // ========================================
 function stripJournalDate(text) {
   const monthNames = 'Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';
-  
+
   // "2011 Oct 22;" or "2011 Oct 22,"
   const pat1 = new RegExp('(\\d{4})\\s+(?:' + monthNames + ')\\.?\\s+\\d{1,2}', 'gi');
   text = text.replace(pat1, '$1');
-  
+
   // "Oct 22, 2011" or "October 22, 2011"
   const pat2 = new RegExp('(?:' + monthNames + ')\\.?\\s+\\d{1,2},?\\s+(\\d{4})', 'gi');
   text = text.replace(pat2, '$1');
@@ -565,15 +563,12 @@ function isWebSource(text) {
 // Remove "Published", keep pub date, keep "Accessed [date]"
 // ========================================
 function formatWebDates(text) {
-  const monthNames = 'January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec';
-
   // Remove word "Published" but keep the date
   text = text.replace(/Published\s+/gi, '');
 
-  // Ensure month names are full
+  // Ensure month abbreviations are expanded to full names
   const abbrMap = MONTH_ABBREV_TO_FULL;
   for (const [abbr, full] of Object.entries(abbrMap)) {
-    // Only replace standalone abbreviations before a day number
     const re = new RegExp('\\b' + abbr.charAt(0).toUpperCase() + abbr.slice(1) + '\\.?\\s+(\\d{1,2})', 'g');
     text = text.replace(re, full + ' $1');
   }
@@ -596,48 +591,14 @@ function removeAvailableFrom(text) {
 }
 
 // ========================================
-// AUTHOR CLEANUP
-// Ensure: LastName AB format, max 3 + et al.
-// ========================================
-function cleanAuthors(authorStr) {
-  // If already has "et al." leave it but clean up
-  let hasEtAl = /et\s+al\.?/i.test(authorStr);
-  let clean = authorStr.replace(/,?\s*et\s+al\.?\s*/gi, '').trim();
-
-  // Split authors by comma, semicolon, or " and "
-  let authors = clean.split(/\s*[,;]\s*|\s+and\s+/i).filter(a => a.trim());
-
-  // Reformat each: ensure no periods in initials
-  authors = authors.map(a => {
-    let parts = a.trim().split(/\s+/);
-    if (parts.length < 2) return a.trim();
-    // Remove periods from initials
-    return parts.map(p => p.replace(/\./g, '')).join(' ');
-  });
-
-  // If more than 3 authors, truncate
-  if (authors.length > 3) {
-    authors = authors.slice(0, 3);
-    hasEtAl = true;
-  }
-
-  let result = authors.join(', ');
-  if (hasEtAl) result += ', et al';
-
-  return result;
-}
-
-// ========================================
 // MAIN FORMAT FUNCTION
 // ========================================
 function formatReference(raw) {
-  // Extract leading number if present (e.g., "1.", "12.", "3)")
+  // Extract leading number if present
   let prefix = '';
   const numMatch = raw.match(/^(\s*\d+[\.\)\]:][\s\t]*)/);
   if (numMatch) {
-    prefix = numMatch[1].replace(/\t/g, ' ').replace(/\s+$/, ' ');
-    // Normalize to "N. " format
-    const num = prefix.match(/(\d+)/)[1];
+    const num = numMatch[1].match(/(\d+)/)[1];
     prefix = num + '. ';
   }
 
@@ -659,13 +620,13 @@ function formatReference(raw) {
     }
   }
 
-  // Extract DOI before page range fix
+  // Extract DOI before page range fix (so DOI numbers aren't mangled)
   const { rest: noDoi, doi } = formatDoi(ref);
   ref = noDoi;
 
-  // Now safe to fix page ranges (DOI and URL removed)
-  // ref = fixPageRange(ref); // Commented out to keep hyphens instead of en dashes
-  ref = enDashToHyphen(ref); // Convert any en dashes to hyphens
+  // Convert any en dashes to hyphens, then expand abbreviated page ranges
+  ref = enDashToHyphen(ref);
+  ref = expandPageRange(ref);
 
   if (web) {
     ref = formatWebDates(ref);
@@ -673,8 +634,7 @@ function formatReference(raw) {
     ref = stripJournalDate(ref);
   }
 
-  // Try to identify: Authors. Title. Journal. Year;Vol(Issue):Pages
-  // Strategy: split on periods, identify author block, title, journal+metadata
+  // Parse: Authors. Title. Journal. Year;Vol(Issue):Pages
   const segments = [];
   let temp = '';
   let depth = 0;
@@ -691,18 +651,13 @@ function formatReference(raw) {
   if (temp.trim()) segments.push(temp.trim());
 
   if (segments.length >= 3) {
-    // segments[0] = authors (with trailing period)
-    // segments[1] = title (with trailing period)
-    // segments[2+] = journal, year, vol, etc.
     let authors = segments[0];
     let title = segments[1];
     let rest = segments.slice(2).join(' ');
 
-    // Apply sentence case to title
     title = toSentenceCase(title);
 
-    // Try to find and italicize journal name at the start of rest
-    // Journal is text before a year (4 digits), a volume number, a semicolon, or end
+    // Find and italicize journal name
     let journalMatch = rest.match(/^([A-Za-z][A-Za-z\s&\-:,]+?)\.?\s*(?=\d{4}|\d{1,3}\(|;|\s*__URL__|\s*$)/);
     if (journalMatch && journalMatch[1].trim().length > 1) {
       let journalName = abbreviateJournal(journalMatch[1].trim());
@@ -712,10 +667,8 @@ function formatReference(raw) {
 
     ref = authors + ' ' + title + ' ' + rest;
   } else if (segments.length === 2) {
-    // Might be just authors + everything else
     let authors = segments[0];
     let rest = segments[1];
-    // Try to split title from journal in rest
     const titleJournalSplit = rest.match(/^([^*]+?)\.\s*(.+)$/s);
     if (titleJournalSplit) {
       let title = toSentenceCase(titleJournalSplit[1].trim() + '.');
@@ -729,7 +682,7 @@ function formatReference(raw) {
     ref = ref.replace('__URL__', url);
   }
 
-  // Clean up spacing
+  // Clean up spacing and double periods
   ref = ref.replace(/\s{2,}/g, ' ').trim();
   ref = ref.replace(/\.\./g, '.');
   ref = ref.replace(/\s+\./g, '.');
@@ -745,7 +698,6 @@ function formatReference(raw) {
     ref = ref.replace(/\.$/, '');
   }
 
-  // Re-add numbering prefix if it was present
   if (prefix) {
     ref = prefix + ref;
   }
@@ -769,7 +721,6 @@ function formatRefs() {
 
   document.getElementById('clearBtn').classList.remove('hidden');
 
-  // Every line is its own reference
   const refs = input.split(/\n/).map(l => l.trim()).filter(l => l);
 
   const formatted = refs.map(r => formatReference(r)).filter(r => r);
