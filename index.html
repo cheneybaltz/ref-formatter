@@ -1,38 +1,9 @@
-<div class="setting" style="grid-column: 1 / -1; margin-top: 20px; border-top: 1px solid var(--border); pt-16px;">
-  <label for="rangeInput" style="margin-top:10px;">Page Range Expander (e.g., 1192-98)</label>
+<div class="setting" style="grid-column: 1 / -1; margin-top: 20px; border-top: 1px solid var(--border); padding-top:16px;">
+  <label for="rangeInput">Page Range Expander</label>
   <div style="display:flex; gap:8px;">
-    <input id="rangeInput" type="text" placeholder="Enter range (e.g. 1998-02)" style="flex:1;">
-    <button class="ghost" onclick="runRangeFix()" style="padding: 10px 20px;">Fix</button>
+    <input id="rangeInput" type="text" placeholder="e.g., 927-33" style="flex:1;" 
+           onkeydown="if(event.key==='Enter') runRangeFix()">
+    <button class="primary" onclick="runRangeFix()">Fix Range</button>
   </div>
-  <div id="rangeOutput" style="margin-top:10px; font-weight:700; color:var(--good); font-family:monospace; font-size:16px;"></div>
+  <div id="rangeOutput" style="margin-top:12px; font-weight:700; color:var(--accent); font-family:monospace; font-size:18px; min-height:1.2em;"></div>
 </div>
-
-<script>
-// Add this function to your <script> block
-function runRangeFix() {
-    const input = document.getElementById('rangeInput').value.trim();
-    const outputEl = document.getElementById('rangeOutput');
-    
-    if (!input.includes('-')) {
-        outputEl.textContent = "Please use [Start]-[End] format.";
-        return;
-    }
-
-    let [base, suffix] = input.split('-').map(s => s.trim());
-    
-    if (suffix.length < base.length) {
-        // Step 1: Prepend leading digits of base to suffix
-        let expandedSuffix = base.slice(0, base.length - suffix.length) + suffix;
-        
-        // Step 2: Ensure the second number is mathematically greater
-        // Example: 1998-02 should become 2002, not 1902
-        if (parseInt(expandedSuffix) <= parseInt(base)) {
-            let prefix = parseInt(base.slice(0, base.length - suffix.length));
-            expandedSuffix = (prefix + 1).toString() + suffix;
-        }
-        outputEl.textContent = `${base}-${expandedSuffix}`;
-    } else {
-        outputEl.textContent = `${base}-${suffix}`;
-    }
-}
-</script>
