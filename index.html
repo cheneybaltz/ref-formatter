@@ -1,117 +1,784 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Ref Formatter — AMA Style</title>
-<style>
-body { font-family: monospace; background:#0a0a0c; color:#ddd; padding:40px; }
-textarea { width:100%; height:200px; background:#111; color:#ddd; padding:10px; }
-button { margin-top:10px; padding:8px 16px; cursor:pointer; }
-.output { margin-top:30px; white-space:pre-wrap; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ref Formatter — AMA Style</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --surface: #111114;
+      --border: #1f1f23;
+      --border-focus: #f97316;
+      --text: #d4d2cd;
+      --text-dim: #6b6b70;
+      --text-bright: #f5f3ef;
+      --accent: #f97316;
+      --accent-dim: rgba(249,115,22,0.5);
+      --success: #166534;
+      --success-text: #bbf7d0;
+      --error-bg: #1c0a0a;
+      --error-border: #7f1d1d;
+      --error-text: #fca5a5;
+      --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      --serif: 'Instrument Serif', Georgia, serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* HEADER */
+    header {
+      padding: 32px 40px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      font-family: var(--serif);
+      font-size: 32px;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--text-bright);
+    }
+    .badge {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* MAIN */
+    main { padding: 32px 40px; max-width: 920px; }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .field-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    /* LINK BUTTON */
+    .link-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+      opacity: 0.8;
+      transition: opacity 0.15s;
+    }
+    .link-btn:hover { opacity: 1; }
+
+    /* TEXTAREA */
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.7;
+      font-family: var(--mono);
+      resize: vertical;
+      transition: border-color 0.2s;
+      margin-bottom: 24px;
+    }
+    textarea:focus { outline: none; border-color: var(--border-focus); }
+
+    /* BUTTONS */
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
+
+    .btn {
+      border-radius: 6px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-family: var(--mono);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .btn:hover { filter: brightness(1.15); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 600;
+      padding: 10px 28px;
+      letter-spacing: 0.03em;
+      border: none;
+    }
+    .btn-primary:disabled {
+      background: #3a3a3e;
+      color: #888;
+      cursor: not-allowed;
+      filter: none;
+    }
+
+    .btn-secondary {
+      background: #1a1a1e;
+      color: #a0a0a5;
+      border-color: var(--border);
+    }
+    .btn-ghost {
+      background: none;
+      color: var(--text-dim);
+      border-color: var(--border);
+    }
+    .btn-copied {
+      background: var(--success) !important;
+      color: var(--success-text) !important;
+      border-color: var(--success) !important;
+    }
+
+    /* OUTPUT */
+    .output-section { animation: slideUp 0.3s ease-out; }
+    .output-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .output-box p {
+      margin-bottom: 14px;
+      color: var(--text);
+      word-break: break-word;
+    }
+    .output-box p:last-child { margin-bottom: 0; }
+    .output-box i { font-style: italic; }
+
+    /* RULES */
+    .rules {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+    .rules h2 {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 400;
+      color: #8a8a8f;
+      margin-bottom: 16px;
+    }
+    .rules ul { list-style: none; }
+    .rules li {
+      font-size: 12px;
+      color: #5a5a5e;
+      padding-left: 16px;
+      position: relative;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .rules li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      opacity: 0.5;
+    }
+
+    .note {
+      margin-top: 24px;
+      padding: 14px 18px;
+      background: #12120f;
+      border: 1px solid #2a2a1e;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #8a8a6a;
+      line-height: 1.6;
+    }
+
+    .hidden { display: none; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      header, main { padding-left: 20px; padding-right: 20px; }
+      header h1 { font-size: 24px; }
+    }
+  </style>
 </head>
 <body>
 
-<h2>AMA Reference Formatter</h2>
+<header>
+  <h1>Ref Formatter</h1>
+  <span class="badge">Free · No Login · AMA Style</span>
+</header>
 
-<textarea id="input" placeholder="Paste references here..."></textarea>
-<br>
-<button onclick="formatRefs()">Format</button>
+<main>
+  <div class="field-header">
+    <span class="field-label">Paste references</span>
+    <button class="link-btn" onclick="loadSample()">load sample</button>
+  </div>
+  <textarea id="input" rows="10" placeholder="Paste your unformatted references here..."></textarea>
 
-<div class="output" id="output"></div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="formatBtn" onclick="formatRefs()">Format</button>
+    <button class="btn btn-secondary hidden" id="copyRichBtn" onclick="copyRich()">Copy with italics</button>
+    <button class="btn btn-secondary hidden" id="copyPlainBtn" onclick="copyPlain()" style="color:var(--text-dim)">Copy plain text</button>
+    <button class="btn btn-ghost hidden" id="clearBtn" onclick="clearAll()">Clear</button>
+  </div>
+
+  <div class="hidden" id="outputSection">
+    <span class="field-label" style="display:block;margin-bottom:10px;">Formatted references</span>
+    <div class="output-box" id="output"></div>
+  </div>
+
+  <div class="rules">
+    <h2>Formatting Rules (AMA Style)</h2>
+    <ul>
+      <li>Journal names italicized (preserved when you "Copy with italics")</li>
+      <li>DOIs as doi:10.xxxx/xxxx — no https:// prefix</li>
+      <li>No "Available from:" before URLs or DOIs</li>
+      <li>Journal dates: year only — no month/day</li>
+      <li>Web sources: date. Accessed date. URL (no "Published" word)</li>
+      <li>Authors: LastName AB — max 3 then et al.</li>
+      <li>Titles in sentence case — lowercase after colons/question marks</li>
+      <li>Supplements formatted as (suppl N)</li>
+      <li>Trial names kept ALL CAPS (e.g., KEYNOTE, PACIFIC)</li>
+      <li>Standard NLM journal abbreviations applied</li>
+      <li>Abbreviated page ranges expanded (e.g., 927-33 → 927-933)</li>
+    </ul>
+    <div class="note">
+      This tool uses rule-based formatting (no AI). It handles the most common reference patterns well. For unusual or complex references, double-check the output.
+    </div>
+  </div>
+</main>
 
 <script>
+const SAMPLE = `1.\tAsiimwe JB, Nagendrappa PB, Atukunda EC, et al. Prevalence of the Use of Herbal Medicines among Patients with Cancer: A Systematic Review and Meta-Analysis. Evid-Based Complement Altern Med ECAM. 2021;2021:9963038. doi: 10.1155/2021/9963038
+2.\tDamery S, Gratus C, Grieve R, et al. The use of herbal medicines by people with cancer: a cross-sectional survey. British Journal of Cancer. 2011 Oct 22;104(6):927–33. doi:10.1038/bjc.2011.47
+3.\tFasinu PS, Rapp GK. Herbal Interaction With Chemotherapeutic Drugs—A Focus on Clinically Significant Findings. Front Oncol. 2019;9:1356. doi:10.3389/fonc.2019.01356
+4.\tVasques AC, Cavaco P, Duarte T, et al. The Use of Herbal Medicines Among Cancer Patients. Cureus. 16(2):e53455. doi:10.7759/cureus.53455
+5.\tBell D. New FDA-Approved Oncology Drugs (2021–2022). Published June 3, 2022. Accessed April 29, 2024. https://ascopost.com/issues/june-3-2022-narratives-special-issue/new-fda-approved-oncology-drugs-2021-2022/
+6. Shi S, Klotz U. Drug Interactions with Herbal Medicines. Clin Pharmacokinet. 2012;51(2 Supplement):77-104. doi:10.2165/11597910-000000000-00000`;
 
-// ==============================
-// AUTHOR FORMATTER (NEW LOGIC)
-// ==============================
+// ========================================
+// JOURNAL ABBREVIATION MAP
+// ========================================
+const JOURNAL_ABBREVS = {
+  'british journal of cancer': 'Br J Cancer',
+  'journal of clinical oncology': 'J Clin Oncol',
+  'new england journal of medicine': 'N Engl J Med',
+  'the new england journal of medicine': 'N Engl J Med',
+  'the lancet': 'Lancet',
+  'the lancet oncology': 'Lancet Oncol',
+  'lancet oncology': 'Lancet Oncol',
+  'journal of the american medical association': 'JAMA',
+  'jama oncology': 'JAMA Oncol',
+  'jama internal medicine': 'JAMA Intern Med',
+  'jama network open': 'JAMA Netw Open',
+  'nature medicine': 'Nat Med',
+  'nature reviews cancer': 'Nat Rev Cancer',
+  'nature reviews clinical oncology': 'Nat Rev Clin Oncol',
+  'annals of internal medicine': 'Ann Intern Med',
+  'annals of oncology': 'Ann Oncol',
+  'clinical pharmacology and therapeutics': 'Clin Pharmacol Ther',
+  'clinical pharmacokinetics': 'Clin Pharmacokinet',
+  'cancer research': 'Cancer Res',
+  'cancer': 'Cancer',
+  'blood': 'Blood',
+  'circulation': 'Circulation',
+  'proceedings of the national academy of sciences': 'Proc Natl Acad Sci U S A',
+  'plos one': 'PLoS One',
+  'plos medicine': 'PLoS Med',
+  'bmc medicine': 'BMC Med',
+  'bmc cancer': 'BMC Cancer',
+  'frontiers in oncology': 'Front Oncol',
+  'frontiers in pharmacology': 'Front Pharmacol',
+  'frontiers in immunology': 'Front Immunol',
+  'frontiers in medicine': 'Front Med',
+  'evidence-based complementary and alternative medicine': 'Evid Based Complement Alternat Med',
+  'evidence based complementary and alternative medicine': 'Evid Based Complement Alternat Med',
+  'journal of ethnopharmacology': 'J Ethnopharmacol',
+  'phytomedicine': 'Phytomedicine',
+  'phytotherapy research': 'Phytother Res',
+  'integrative cancer therapies': 'Integr Cancer Ther',
+  'supportive care in cancer': 'Support Care Cancer',
+  'european journal of cancer': 'Eur J Cancer',
+  'international journal of cancer': 'Int J Cancer',
+  'british journal of clinical pharmacology': 'Br J Clin Pharmacol',
+  'drug safety': 'Drug Saf',
+  'journal of pharmacy and pharmacology': 'J Pharm Pharmacol',
+  'american journal of health-system pharmacy': 'Am J Health Syst Pharm',
+  'chest': 'Chest',
+  'gastroenterology': 'Gastroenterology',
+  'hepatology': 'Hepatology',
+  'pediatrics': 'Pediatrics',
+  'radiology': 'Radiology',
+  'science': 'Science',
+  'cell': 'Cell',
+  'molecular cell': 'Mol Cell',
+  'journal of biological chemistry': 'J Biol Chem',
+  'biochemical pharmacology': 'Biochem Pharmacol',
+  'journal of pharmacology and experimental therapeutics': 'J Pharmacol Exp Ther',
+  'pharmacological reviews': 'Pharmacol Rev',
+  'pharmacotherapy': 'Pharmacotherapy',
+  'drug metabolism and disposition': 'Drug Metab Dispos',
+  'clinical cancer research': 'Clin Cancer Res',
+  'molecular cancer therapeutics': 'Mol Cancer Ther',
+  'journal of the national cancer institute': 'J Natl Cancer Inst',
+  'ca: a cancer journal for clinicians': 'CA Cancer J Clin',
+  'ca a cancer journal for clinicians': 'CA Cancer J Clin',
+  'the bmj': 'BMJ',
+  'bmj': 'BMJ',
+  'world journal of gastroenterology': 'World J Gastroenterol',
+  'nutrients': 'Nutrients',
+  'molecules': 'Molecules',
+  'oncologist': 'Oncologist',
+  'the oncologist': 'Oncologist',
+  'therapeutic advances in medical oncology': 'Ther Adv Med Oncol',
+  'current opinion in oncology': 'Curr Opin Oncol',
+  'expert opinion on drug safety': 'Expert Opin Drug Saf',
+  'journal of clinical pharmacy and therapeutics': 'J Clin Pharm Ther',
+  'mayo clinic proceedings': 'Mayo Clin Proc',
+  'american journal of medicine': 'Am J Med',
+  'journal of internal medicine': 'J Intern Med',
+  'archives of internal medicine': 'Arch Intern Med',
+  'journal of the national comprehensive cancer network': 'J Natl Compr Canc Netw',
+};
 
-function formatAuthors(authorString) {
+// ========================================
+// KNOWN ACRONYMS & PROPER NOUNS
+// ========================================
+const ACRONYMS = new Set([
+  'FDA','DNA','RNA','HIV','AIDS','MRI','CT','PET','WHO','NIH','CDC',
+  'US','USA','UK','EU','ECAM','BMI','ICU','IV','ER','OR','GI','CNS',
+  'HER2','EGFR','VEGF','PD-1','PD-L1','BRCA','ALK','KRAS','BRAF',
+  'mRNA','NSCLC','SCLC','AML','ALL','CML','CLL','NHL','RCC','HCC',
+  'GBM','ASCO','ESMO','NCCN','NCI','ACS','AMA','NLM',
+]);
 
-  authorString = authorString.replace(/\.$/, '').trim();
+// Known trial names to keep ALL CAPS
+const TRIAL_NAMES = new Set([
+  'KEYNOTE','CHECKMATE','PACIFIC','TITAN','JAVELIN','DESTINY',
+  'MONALEESA','PALOMA','MONARCH','BOLERO','CLEOPATRA','EMILIA',
+  'ALEX','ALTA','CASPIAN','FLAURA','HIMALAYA','LEAP','ORIENT',
+  'RATIONALE','TOPAZ','POSEIDON','CRYSTAL','FIRE','TORCH',
+  'CROWN','EMERALD','ADAURA','LAURA','AEGEAN','TROPION',
+]);
 
-  // Remove existing "et al" if present
-  authorString = authorString.replace(/;?\s*et al\.?/i, '');
+// ========================================
+// MONTH HANDLING
+// ========================================
+const MONTH_ABBREV_TO_FULL = {
+  'jan':'January','feb':'February','mar':'March','apr':'April',
+  'may':'May','jun':'June','jul':'July','aug':'August',
+  'sep':'September','sept':'September','oct':'October',
+  'nov':'November','dec':'December',
+};
+const MONTH_FULL = ['january','february','march','april','may','june',
+  'july','august','september','october','november','december'];
 
-  const authors = authorString.split(/,\s*(?=[A-Za-z])/);
+function isMonth(w) {
+  const l = w.toLowerCase().replace(/[.,;]/g,'');
+  return MONTH_FULL.includes(l) || MONTH_ABBREV_TO_FULL[l] !== undefined;
+}
 
-  const formatted = authors.map(name => {
+function expandMonth(w) {
+  const l = w.toLowerCase().replace(/[.,;]/g,'');
+  if (MONTH_FULL.includes(l)) return l.charAt(0).toUpperCase() + l.slice(1);
+  if (MONTH_ABBREV_TO_FULL[l]) return MONTH_ABBREV_TO_FULL[l];
+  return w;
+}
 
-    name = name.trim();
-
-    // Handle "Last, First Middle"
-    if (name.includes(",")) {
-      const parts = name.split(",");
-      const last = parts[0].trim();
-      const first = parts[1].trim();
-
-      const initials = first
-        .split(/\s+/)
-        .map(n => n.charAt(0).toUpperCase())
-        .join("");
-
-      return last + " " + initials;
-    }
-
-    // Handle "Last First Middle"
-    const parts = name.split(/\s+/);
-    const last = parts[0];
-    const initials = parts.slice(1)
-      .map(n => n.charAt(0).toUpperCase())
-      .join("");
-
-    return last + " " + initials;
-
+// ========================================
+// SENTENCE CASE
+// ========================================
+function toSentenceCase(title) {
+  // Protect content in parentheses that might be years/acronyms
+  const protected_ = [];
+  let t = title.replace(/\(([^)]+)\)/g, (m, inner) => {
+    protected_.push('(' + inner + ')');
+    return '\x00PROT' + (protected_.length - 1) + '\x00';
   });
 
-  // Apply author count rule
-  if (formatted.length >= 6) {
-    return formatted.slice(0,3).join(", ") + "; et al.";
+  // Split on sentence-boundary punctuation within title
+  const parts = t.split(/(?<=[:.?])\s+|(?<=—)\s*/);
+
+  const result = parts.map((part, idx) => {
+    return part.split(/(\s+)/).map((word, wIdx) => {
+      if (word.startsWith('\x00PROT')) return word;
+      if (/^\s+$/.test(word)) return word;
+
+      const stripped = word.replace(/[^a-zA-Z0-9-]/g, '');
+      if (!stripped) return word;
+
+      // Keep ALL CAPS acronyms
+      if (ACRONYMS.has(stripped.toUpperCase()) && stripped === stripped.toUpperCase()) return word;
+      // Keep trial names
+      if (TRIAL_NAMES.has(stripped.toUpperCase()) && stripped === stripped.toUpperCase()) return word;
+      // Keep words that are all caps and 2-5 chars (likely acronyms)
+      if (/^[A-Z]{2,5}$/.test(stripped)) return word;
+      // Keep hyphenated acronyms like PD-L1, HER2
+      if (/^[A-Z]{1,5}-[A-Z0-9]{1,5}$/i.test(stripped) && stripped === stripped.toUpperCase()) return word;
+
+      // First word of first part: capitalize
+      if (idx === 0 && wIdx === 0) {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }
+      // First real word of subsequent parts (after : ? . —): lowercase
+      if (idx > 0 && wIdx === 0) {
+        return word.toLowerCase();
+      }
+      // Everything else: lowercase
+      return word.toLowerCase();
+    }).join('');
+  }).join(' ');
+
+  // Restore protected content
+  let final = result;
+  protected_.forEach((p, i) => {
+    final = final.replace('\x00PROT' + i + '\x00', p);
+  });
+
+  // Ensure ends with period
+  final = final.trim();
+  if (!final.endsWith('.')) final += '.';
+
+  return final;
+}
+
+// ========================================
+// DOI FORMATTING
+// ========================================
+function formatDoi(text) {
+  let doi = '';
+  let rest = text;
+
+  const doiPatterns = [
+    /(?:Available from:\s*)?(?:https?:\/\/)?(?:dx\.)?doi\.org\/(10\.\S+)/i,
+    /doi:\s*(10\.\S+)/i,
+    /DOI:\s*(10\.\S+)/i,
+  ];
+
+  for (const pat of doiPatterns) {
+    const m = rest.match(pat);
+    if (m) {
+      doi = m[1].replace(/[\s.,;]+$/, '');
+      rest = rest.replace(m[0], '').trim();
+      break;
+    }
   }
 
-  return formatted.join(", ") + ".";
+  return { rest, doi };
 }
 
-
-// ==============================
-// MAIN FORMATTER
-// ==============================
-
-function formatReference(ref) {
-
-  ref = ref.trim();
-  if (!ref) return "";
-
-  // Extract authors (before first period)
-  const firstPeriod = ref.indexOf(".");
-  if (firstPeriod === -1) return ref;
-
-  const authorPart = ref.substring(0, firstPeriod);
-  const rest = ref.substring(firstPeriod + 1).trim();
-
-  const formattedAuthors = formatAuthors(authorPart);
-
-  return formattedAuthors + " " + rest;
+// ========================================
+// SUPPLEMENT FORMATTING
+// ========================================
+function formatSupplement(text) {
+  return text
+    .replace(/\((\d+)_suppl\)/g, '(suppl $1)')
+    .replace(/\((\d+)\s*[Ss]upplement\)/g, '(suppl $1)')
+    .replace(/\([Ss]upplement\s*(\d+)\)/g, '(suppl $1)')
+    .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)');
 }
 
+// ========================================
+// ABBREVIATE JOURNAL NAME
+// ========================================
+function abbreviateJournal(name) {
+  const cleaned = name.trim().replace(/\.$/, '');
+  const key = cleaned.toLowerCase();
+  if (JOURNAL_ABBREVS[key]) return JOURNAL_ABBREVS[key];
+  return cleaned;
+}
 
-// ==============================
-// UI FUNCTION
-// ==============================
+// ========================================
+// PAGE RANGE: convert en dashes to hyphens
+// ========================================
+function enDashToHyphen(text) {
+  return text.replace(/(\d{1,5})\s*–\s*(\d{1,5})/g, '$1-$2');
+}
+
+// ========================================
+// PAGE RANGE EXPANSION: 927-33 → 927-933
+// ========================================
+function expandPageRange(text) {
+  return text.replace(/(\d{2,5})-(\d{1,4})(?=\D|$)/g, (match, start, end) => {
+    // If end is already as long or longer than start, it's already fully written
+    if (end.length >= start.length) return match;
+    // Take the prefix from start that end is missing
+    const prefix = start.slice(0, start.length - end.length);
+    return start + '-' + prefix + end;
+  });
+}
+
+// ========================================
+// STRIP DATE FROM JOURNAL REFERENCE
+// Removes patterns like "2011 Oct 22" or "Oct 22, 2011" leaving just year
+// ========================================
+function stripJournalDate(text) {
+  const monthNames = 'Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';
+
+  // "2011 Oct 22;" or "2011 Oct 22,"
+  const pat1 = new RegExp('(\\d{4})\\s+(?:' + monthNames + ')\\.?\\s+\\d{1,2}', 'gi');
+  text = text.replace(pat1, '$1');
+
+  // "Oct 22, 2011" or "October 22, 2011"
+  const pat2 = new RegExp('(?:' + monthNames + ')\\.?\\s+\\d{1,2},?\\s+(\\d{4})', 'gi');
+  text = text.replace(pat2, '$1');
+
+  // "2024 Jan;" just month no day
+  const pat3 = new RegExp('(\\d{4})\\s+(?:' + monthNames + ')\\.?(?=\\s*;)', 'gi');
+  text = text.replace(pat3, '$1');
+
+  return text;
+}
+
+// ========================================
+// DETECT IF REFERENCE IS A WEB/URL SOURCE
+// ========================================
+function isWebSource(text) {
+  return /https?:\/\/\S+/.test(text) && !/doi[:.]/.test(text.toLowerCase());
+}
+
+// ========================================
+// FORMAT WEB SOURCE DATES
+// Remove "Published", keep pub date, keep "Accessed [date]"
+// ========================================
+function formatWebDates(text) {
+  // Remove word "Published" but keep the date
+  text = text.replace(/Published\s+/gi, '');
+
+  // Ensure month abbreviations are expanded to full names
+  const abbrMap = MONTH_ABBREV_TO_FULL;
+  for (const [abbr, full] of Object.entries(abbrMap)) {
+    const re = new RegExp('\\b' + abbr.charAt(0).toUpperCase() + abbr.slice(1) + '\\.?\\s+(\\d{1,2})', 'g');
+    text = text.replace(re, full + ' $1');
+  }
+
+  return text;
+}
+
+// ========================================
+// STRIP LEADING NUMBERING
+// ========================================
+function stripNumbering(text) {
+  return text.replace(/^\s*\d+[\.\)\]:]\s*/, '').replace(/^\t+/, '');
+}
+
+// ========================================
+// REMOVE "Available from:" prefix
+// ========================================
+function removeAvailableFrom(text) {
+  return text.replace(/Available from:\s*/gi, '');
+}
+
+// ========================================
+// MAIN FORMAT FUNCTION
+// ========================================
+function formatReference(raw) {
+  // Extract leading number if present
+  let prefix = '';
+  const numMatch = raw.match(/^(\s*\d+[\.\)\]:][\s\t]*)/);
+  if (numMatch) {
+    const num = numMatch[1].match(/(\d+)/)[1];
+    prefix = num + '. ';
+  }
+
+  let ref = stripNumbering(raw).trim();
+  if (!ref) return '';
+
+  ref = removeAvailableFrom(ref);
+  ref = formatSupplement(ref);
+
+  const web = isWebSource(ref);
+
+  // Extract URL before any other processing
+  let url = '';
+  if (web) {
+    const urlMatch = ref.match(/(https?:\/\/\S+)/);
+    if (urlMatch) {
+      url = urlMatch[1].replace(/[\s.,;]+$/, '');
+      ref = ref.replace(urlMatch[0], ' __URL__ ').trim();
+    }
+  }
+
+  // Extract DOI before page range fix (so DOI numbers aren't mangled)
+  const { rest: noDoi, doi } = formatDoi(ref);
+  ref = noDoi;
+
+  // Convert any en dashes to hyphens, then expand abbreviated page ranges
+  ref = enDashToHyphen(ref);
+  ref = expandPageRange(ref);
+
+  if (web) {
+    ref = formatWebDates(ref);
+  } else {
+    ref = stripJournalDate(ref);
+  }
+
+  // Parse: Authors. Title. Journal. Year;Vol(Issue):Pages
+  const segments = [];
+  let temp = '';
+  let depth = 0;
+  for (let i = 0; i < ref.length; i++) {
+    const c = ref[i];
+    if (c === '(') depth++;
+    if (c === ')') depth--;
+    temp += c;
+    if (c === '.' && depth === 0 && i < ref.length - 1) {
+      segments.push(temp.trim());
+      temp = '';
+    }
+  }
+  if (temp.trim()) segments.push(temp.trim());
+
+  if (segments.length >= 3) {
+    let authors = segments[0];
+    let title = segments[1];
+    let rest = segments.slice(2).join(' ');
+
+    title = toSentenceCase(title);
+
+    // Find and italicize journal name
+    let journalMatch = rest.match(/^([A-Za-z][A-Za-z\s&\-:,]+?)\.?\s*(?=\d{4}|\d{1,3}\(|;|\s*__URL__|\s*$)/);
+    if (journalMatch && journalMatch[1].trim().length > 1) {
+      let journalName = abbreviateJournal(journalMatch[1].trim());
+      let afterJournal = rest.slice(journalMatch[0].length).trim();
+      rest = '*' + journalName + '*. ' + afterJournal;
+    }
+
+    ref = authors + ' ' + title + ' ' + rest;
+  } else if (segments.length === 2) {
+    let authors = segments[0];
+    let rest = segments[1];
+    const titleJournalSplit = rest.match(/^([^*]+?)\.\s*(.+)$/s);
+    if (titleJournalSplit) {
+      let title = toSentenceCase(titleJournalSplit[1].trim() + '.');
+      let remainder = titleJournalSplit[2].trim();
+      ref = authors + ' ' + title + ' ' + remainder;
+    }
+  }
+
+  // Put URL back
+  if (url) {
+    ref = ref.replace('__URL__', url);
+  }
+
+  // Clean up spacing and double periods
+  ref = ref.replace(/\s{2,}/g, ' ').trim();
+  ref = ref.replace(/\.\./g, '.');
+  ref = ref.replace(/\s+\./g, '.');
+
+  // Append DOI
+  if (doi) {
+    ref = ref.replace(/\.\s*$/, '');
+    ref += '. doi:' + doi;
+  }
+
+  // Remove trailing period after DOI
+  if (/doi:10\.\S+\.$/.test(ref)) {
+    ref = ref.replace(/\.$/, '');
+  }
+
+  if (prefix) {
+    ref = prefix + ref;
+  }
+
+  return ref;
+}
+
+// ========================================
+// UI FUNCTIONS
+// ========================================
+let rawOutput = '';
+
+function loadSample() {
+  document.getElementById('input').value = SAMPLE;
+  document.getElementById('clearBtn').classList.remove('hidden');
+}
 
 function formatRefs() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
 
-  const input = document.getElementById("input").value;
+  document.getElementById('clearBtn').classList.remove('hidden');
 
-  const refs = input.split("\n").filter(r => r.trim() !== "");
+  const refs = input.split(/\n/).map(l => l.trim()).filter(l => l);
 
-  const formatted = refs.map(r => formatReference(r));
+  const formatted = refs.map(r => formatReference(r)).filter(r => r);
+  rawOutput = formatted.join('\n\n');
 
-  document.getElementById("output").textContent = formatted.join("\n\n");
+  renderOutput(rawOutput);
+  document.getElementById('outputSection').classList.remove('hidden');
+  document.getElementById('outputSection').classList.add('output-section');
+  document.getElementById('copyRichBtn').classList.remove('hidden');
+  document.getElementById('copyPlainBtn').classList.remove('hidden');
 }
 
+function renderOutput(text) {
+  const container = document.getElementById('output');
+  container.innerHTML = '';
+  text.split('\n').forEach(line => {
+    if (!line.trim()) return;
+    const p = document.createElement('p');
+    p.innerHTML = line.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+    container.appendChild(p);
+  });
+}
+
+function copyRich() {
+  const lines = rawOutput.split('\n').filter(l => l.trim());
+  const html = lines.map(line => '<p>' + line.replace(/\*([^*]+)\*/g, '<i>$1</i>') + '</p>').join('');
+  const plain = rawOutput.replace(/\*/g, '');
+  navigator.clipboard.write([
+    new ClipboardItem({
+      'text/html': new Blob([html], { type: 'text/html' }),
+      'text/plain': new Blob([plain], { type: 'text/plain' }),
+    })
+  ]);
+  flashCopied('copyRichBtn');
+}
+
+function copyPlain() {
+  navigator.clipboard.writeText(rawOutput.replace(/\*/g, ''));
+  flashCopied('copyPlainBtn');
+}
+
+function flashCopied(id) {
+  const btn = document.getElementById(id);
+  const orig = btn.textContent;
+  btn.classList.add('btn-copied');
+  btn.textContent = 'Copied ✓';
+  setTimeout(() => { btn.classList.remove('btn-copied'); btn.textContent = orig; }, 2000);
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('outputSection').classList.add('hidden');
+  document.getElementById('copyRichBtn').classList.add('hidden');
+  document.getElementById('copyPlainBtn').classList.add('hidden');
+  document.getElementById('clearBtn').classList.add('hidden');
+  rawOutput = '';
+}
 </script>
 
 </body>
 </html>
-
