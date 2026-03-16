@@ -169,6 +169,38 @@
     .output-box p:last-child { margin-bottom: 0; }
     .output-box i { font-style: italic; }
 
+    /* FLAGS */
+    .flag {
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* DUPLICATE NOTES */
+    .dup-section {
+      margin-top: 24px;
+      padding: 16px 20px;
+      background: #12120f;
+      border: 1px solid #2a2a1e;
+      border-radius: 6px;
+    }
+    .dup-section h3 {
+      font-family: var(--serif);
+      font-size: 16px;
+      font-weight: 400;
+      color: #8a8a6a;
+      margin-bottom: 10px;
+    }
+    .dup-section p {
+      font-size: 12px;
+      color: #8a8a6a;
+      margin-bottom: 6px;
+    }
+
     /* RULES */
     .rules {
       margin-top: 48px;
@@ -182,6 +214,20 @@
       color: #8a8a8f;
       margin-bottom: 16px;
     }
+    .rules-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .rule-group h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      opacity: 0.6;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
     .rules ul { list-style: none; }
     .rules li {
       font-size: 12px;
@@ -189,10 +235,10 @@
       padding-left: 16px;
       position: relative;
       line-height: 1.6;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .rules li::before {
-      content: '›';
+      content: '\203A';
       position: absolute;
       left: 0;
       color: var(--accent);
@@ -226,7 +272,7 @@
 
 <header>
   <h1>Ref Formatter</h1>
-  <span class="badge">Free · No Login · AMA Style</span>
+  <span class="badge">Free &middot; No Login &middot; AMA Style</span>
 </header>
 
 <main>
@@ -246,23 +292,117 @@
   <div class="hidden" id="outputSection">
     <span class="field-label" style="display:block;margin-bottom:10px;">Formatted references</span>
     <div class="output-box" id="output"></div>
+    <div class="hidden" id="dupSection">
+      <div class="dup-section">
+        <h3>Duplicate Reference Notes</h3>
+        <div id="dupNotes"></div>
+      </div>
+    </div>
   </div>
 
   <div class="rules">
-    <h2>Formatting Rules (AMA Style)</h2>
-    <ul>
-      <li>Journal names italicized (preserved when you "Copy with italics")</li>
-      <li>DOIs as doi:10.xxxx/xxxx — no https:// prefix</li>
-      <li>No "Available from:" before URLs or DOIs</li>
-      <li>Journal dates: year only — no month/day</li>
-      <li>Web sources: date. Accessed date. URL (no "Published" word)</li>
-      <li>Authors: LastName AB — max 3 then et al.</li>
-      <li>Titles in sentence case — lowercase after colons/question marks</li>
-      <li>Supplements formatted as (suppl N)</li>
-      <li>Trial names kept ALL CAPS (e.g., KEYNOTE, PACIFIC)</li>
-      <li>Standard NLM journal abbreviations applied</li>
-      <li>Abbreviated page ranges expanded (e.g., 927-33 → 927-933)</li>
-    </ul>
+    <h2>Formatting Rules (AMA 11th Edition)</h2>
+    <div class="rules-grid">
+
+      <div class="rule-group">
+        <h3>Authors</h3>
+        <ul>
+          <li>Format: LastName AB (no periods/spaces between initials)</li>
+          <li>Names in wrong order are corrected (e.g., Susan Doe &rarr; Doe S)</li>
+          <li>Rule of 3: 6+ authors truncated to first 3 + et al</li>
+          <li>5 or fewer authors listed in full, no et al</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Title</h3>
+        <ul>
+          <li>Sentence case &mdash; lowercase after colons, question marks, periods (unless proper noun)</li>
+          <li>Trial names kept ALL CAPS (e.g., KEYNOTE, PACIFIC)</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Journal</h3>
+        <ul>
+          <li>Official NLM abbreviation applied</li>
+          <li>Journal names italicized (preserved in "Copy with italics")</li>
+          <li>ONLY journal names are italicized &mdash; not organizations, publishers, or websites</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Published Date</h3>
+        <ul>
+          <li>"Published" (without "online") &rarr; deleted</li>
+          <li>"Published online" &rarr; deleted</li>
+          <li>Journal refs: year only (month/day stripped)</li>
+          <li>Web sources: Month Day, Year (month not abbreviated)</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Volume, Issue, Pages</h3>
+        <ul>
+          <li>Format: volume;(issue):start-end</li>
+          <li>Month/day before issue number deleted</li>
+          <li>En dashes (&ndash;) changed to hyphens (-)</li>
+          <li>Identical page numbers collapsed (e.g., 100-100 &rarr; 100)</li>
+          <li>Abbreviated end pages expanded (e.g., 1998-02 &rarr; 1998-2002)</li>
+          <li>Missing page numbers flagged</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Supplements</h3>
+        <ul>
+          <li>"Supplement" abbreviated to "suppl"</li>
+          <li>Formatted as (suppl N)</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>DOI &amp; URLs</h3>
+        <ul>
+          <li>DOIs formatted as doi:10.xxxx &mdash; no https:// prefix, no trailing period</li>
+          <li>URLs placed at end with no trailing period</li>
+          <li>Missing "Accessed [date]" before URL flagged</li>
+          <li>Missing DOI and URL flagged</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Organizational &amp; Web Reports</h3>
+        <ul>
+          <li>Reports formatted as: Author(s). Title. Organization; Year. Accessed [date]. URL</li>
+          <li>Organization names NOT italicized</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Special Formatting</h3>
+        <ul>
+          <li>NCCN: "NCCN. Clinical Practice Guidelines in Oncology. [cancer], version [N.year]."</li>
+          <li>"U.S. Food and Drug Administration" &rarr; FDA</li>
+          <li>Federal departments: "U.S." &rarr; "US"</li>
+          <li>"[package insert]" &rarr; "Prescribing information."</li>
+          <li>Duplicate company names: second instance removed</li>
+          <li>Abstract: [N] &rarr; Abstract [N] (colon removed)</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h3>Cleanup</h3>
+        <ul>
+          <li>PMID/PMCID information removed</li>
+          <li>"Abstract/Paper presented at" &rarr; "Presented at"</li>
+          <li>US states in conference locations abbreviated to 2-letter postal codes</li>
+          <li>All en dashes (&ndash;) replaced with hyphens (-) throughout</li>
+          <li>Duplicate references detected and noted (not removed)</li>
+        </ul>
+      </div>
+    </div>
+
     <div class="note">
       This tool uses rule-based formatting (no AI). It handles the most common reference patterns well. For unusual or complex references, double-check the output.
     </div>
@@ -275,7 +415,9 @@ const SAMPLE = `1.\tAsiimwe JB, Nagendrappa PB, Atukunda EC, et al. Prevalence o
 3.\tFasinu PS, Rapp GK. Herbal Interaction With Chemotherapeutic Drugs—A Focus on Clinically Significant Findings. Front Oncol. 2019;9:1356. doi:10.3389/fonc.2019.01356
 4.\tVasques AC, Cavaco P, Duarte T, et al. The Use of Herbal Medicines Among Cancer Patients. Cureus. 16(2):e53455. doi:10.7759/cureus.53455
 5.\tBell D. New FDA-Approved Oncology Drugs (2021–2022). Published June 3, 2022. Accessed April 29, 2024. https://ascopost.com/issues/june-3-2022-narratives-special-issue/new-fda-approved-oncology-drugs-2021-2022/
-6. Shi S, Klotz U. Drug Interactions with Herbal Medicines. Clin Pharmacokinet. 2012;51(2 Supplement):77-104. doi:10.2165/11597910-000000000-00000`;
+6. Shi S, Klotz U. Drug Interactions with Herbal Medicines. Clin Pharmacokinet. 2012;51(2 Supplement):77-104. doi:10.2165/11597910-000000000-00000
+7. Claxton G, Rae M, A Winger, E Wager, E Byers, J Kerns, G Shmavonian, A Damico. Kaiser Family Foundation. 2024. Employer Health Benefits 2024. https://files.kff.org/attachment/report.pdf.
+8. U.S. Food and Drug Administration. KEYTRUDA (pembrolizumab) [package insert]. Merck & Co., Inc; 2024. PMID: 12345678`;
 
 // ========================================
 // JOURNAL ABBREVIATION MAP
@@ -360,6 +502,7 @@ const JOURNAL_ABBREVS = {
   'journal of internal medicine': 'J Intern Med',
   'archives of internal medicine': 'Arch Intern Med',
   'journal of the national comprehensive cancer network': 'J Natl Compr Canc Netw',
+  'cureus': 'Cureus',
 };
 
 // ========================================
@@ -381,6 +524,27 @@ const TRIAL_NAMES = new Set([
   'RATIONALE','TOPAZ','POSEIDON','CRYSTAL','FIRE','TORCH',
   'CROWN','EMERALD','ADAURA','LAURA','AEGEAN','TROPION',
 ]);
+
+// US state abbreviation map for conference locations
+const US_STATES = {
+  'alabama':'AL','alaska':'AK','arizona':'AZ','arkansas':'AR','california':'CA',
+  'colorado':'CO','connecticut':'CT','delaware':'DE','florida':'FL','georgia':'GA',
+  'hawaii':'HI','idaho':'ID','illinois':'IL','indiana':'IN','iowa':'IA',
+  'kansas':'KS','kentucky':'KY','louisiana':'LA','maine':'ME','maryland':'MD',
+  'massachusetts':'MA','michigan':'MI','minnesota':'MN','mississippi':'MS',
+  'missouri':'MO','montana':'MT','nebraska':'NE','nevada':'NV',
+  'new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY',
+  'north carolina':'NC','north dakota':'ND','ohio':'OH','oklahoma':'OK',
+  'oregon':'OR','pennsylvania':'PA','rhode island':'RI','south carolina':'SC',
+  'south dakota':'SD','tennessee':'TN','texas':'TX','utah':'UT','vermont':'VT',
+  'virginia':'VA','washington':'WA','west virginia':'WV','wisconsin':'WI','wyoming':'WY',
+  'calif':'CA','calif.':'CA','fla':'FL','fla.':'FL','ill':'IL','ill.':'IL',
+  'mass':'MA','mass.':'MA','mich':'MI','mich.':'MI','minn':'MN','minn.':'MN',
+  'penn':'PA','penn.':'PA','tenn':'TN','tenn.':'TN','tex':'TX','tex.':'TX',
+  'wash':'WA','wash.':'WA','wis':'WI','wis.':'WI','conn':'CT','conn.':'CT',
+  'del':'DE','del.':'DE','ind':'IN','ind.':'IN','neb':'NE','neb.':'NE',
+  'okla':'OK','okla.':'OK','ore':'OR','ore.':'OR','colo':'CO','colo.':'CO',
+};
 
 // ========================================
 // MONTH HANDLING
@@ -410,15 +574,13 @@ function expandMonth(w) {
 // SENTENCE CASE
 // ========================================
 function toSentenceCase(title) {
-  // Protect content in parentheses that might be years/acronyms
   const protected_ = [];
   let t = title.replace(/\(([^)]+)\)/g, (m, inner) => {
     protected_.push('(' + inner + ')');
     return '\x00PROT' + (protected_.length - 1) + '\x00';
   });
 
-  // Split on sentence-boundary punctuation within title
-  const parts = t.split(/(?<=[:.?])\s+|(?<=—)\s*/);
+  const parts = t.split(/(?<=[:.?])\s+|(?<=\u2014)\s*/);
 
   const result = parts.map((part, idx) => {
     return part.split(/(\s+)/).map((word, wIdx) => {
@@ -428,35 +590,26 @@ function toSentenceCase(title) {
       const stripped = word.replace(/[^a-zA-Z0-9-]/g, '');
       if (!stripped) return word;
 
-      // Keep ALL CAPS acronyms
       if (ACRONYMS.has(stripped.toUpperCase()) && stripped === stripped.toUpperCase()) return word;
-      // Keep trial names
       if (TRIAL_NAMES.has(stripped.toUpperCase()) && stripped === stripped.toUpperCase()) return word;
-      // Keep words that are all caps and 2-5 chars (likely acronyms)
       if (/^[A-Z]{2,5}$/.test(stripped)) return word;
-      // Keep hyphenated acronyms like PD-L1, HER2
       if (/^[A-Z]{1,5}-[A-Z0-9]{1,5}$/i.test(stripped) && stripped === stripped.toUpperCase()) return word;
 
-      // First word of first part: capitalize
       if (idx === 0 && wIdx === 0) {
         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
       }
-      // First real word of subsequent parts (after : ? . —): lowercase
       if (idx > 0 && wIdx === 0) {
         return word.toLowerCase();
       }
-      // Everything else: lowercase
       return word.toLowerCase();
     }).join('');
   }).join(' ');
 
-  // Restore protected content
   let final = result;
   protected_.forEach((p, i) => {
     final = final.replace('\x00PROT' + i + '\x00', p);
   });
 
-  // Ensure ends with period
   final = final.trim();
   if (!final.endsWith('.')) final += '.';
 
@@ -472,6 +625,7 @@ function formatDoi(text) {
 
   const doiPatterns = [
     /(?:Available from:\s*)?(?:https?:\/\/)?(?:dx\.)?doi\.org\/(10\.\S+)/i,
+    /(?:Available from:\s*)?https?:\/\/doi:(10\.\S+)/i,
     /doi:\s*(10\.\S+)/i,
     /DOI:\s*(10\.\S+)/i,
   ];
@@ -496,7 +650,9 @@ function formatSupplement(text) {
     .replace(/\((\d+)_suppl\)/g, '(suppl $1)')
     .replace(/\((\d+)\s*[Ss]upplement\)/g, '(suppl $1)')
     .replace(/\([Ss]upplement\s*(\d+)\)/g, '(suppl $1)')
-    .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)');
+    .replace(/\([Ss]uppl\.?\s*(\d+)\)/g, '(suppl $1)')
+    .replace(/\((\d+)\s+[Ss]upplement\)/g, '(suppl $1)')
+    .replace(/\((\d+)\s+[Ss]uppl\.?\)/g, '(suppl $1)');
 }
 
 // ========================================
@@ -510,41 +666,72 @@ function abbreviateJournal(name) {
 }
 
 // ========================================
-// PAGE RANGE: convert en dashes to hyphens
+// EN DASH TO HYPHEN (everywhere)
 // ========================================
 function enDashToHyphen(text) {
-  return text.replace(/(\d{1,5})\s*–\s*(\d{1,5})/g, '$1-$2');
+  return text.replace(/\u2013/g, '-');
 }
 
 // ========================================
-// PAGE RANGE EXPANSION: 927-33 → 927-933
+// EXPAND ABBREVIATED PAGE RANGES
+// e.g., 927-33 -> 927-933, 1998-02 -> 1998-2002
 // ========================================
 function expandPageRange(text) {
-  return text.replace(/(\d{2,5})-(\d{1,4})(?=\D|$)/g, (match, start, end) => {
-    // If end is already as long or longer than start, it's already fully written
-    if (end.length >= start.length) return match;
-    // Take the prefix from start that end is missing
-    const prefix = start.slice(0, start.length - end.length);
-    return start + '-' + prefix + end;
+  return text.replace(/(\d+)-(\d+)/g, (match, start, end) => {
+    // Only expand if end is shorter than start (abbreviated)
+    if (end.length < start.length) {
+      const prefix = start.substring(0, start.length - end.length);
+      const expanded = prefix + end;
+      // Ensure expanded end > start
+      if (parseInt(expanded) > parseInt(start)) {
+        return start + '-' + expanded;
+      }
+      // If not greater, try next digit up
+      const altPrefix = String(parseInt(prefix) + 1);
+      const altExpanded = altPrefix + end.substring(altPrefix.length - prefix.length >= 0 ? 0 : 0);
+      // Fallback: just prepend enough leading digits to make it bigger
+      let fullEnd = prefix + end;
+      if (parseInt(fullEnd) <= parseInt(start)) {
+        // increment the prefix portion
+        let p = parseInt(start.substring(0, start.length - end.length)) + 1;
+        fullEnd = String(p) + end;
+      }
+      if (parseInt(fullEnd) > parseInt(start)) {
+        return start + '-' + fullEnd;
+      }
+      return match; // give up, return as-is
+    }
+    // If same page numbers, collapse
+    if (start === end) {
+      return start;
+    }
+    return match;
+  });
+}
+
+// ========================================
+// COLLAPSE IDENTICAL PAGE NUMBERS
+// e.g., 100-100 -> 100
+// ========================================
+function collapseIdenticalPages(text) {
+  return text.replace(/(\d+)-(\d+)/g, (match, start, end) => {
+    if (start === end) return start;
+    return match;
   });
 }
 
 // ========================================
 // STRIP DATE FROM JOURNAL REFERENCE
-// Removes patterns like "2011 Oct 22" or "Oct 22, 2011" leaving just year
 // ========================================
 function stripJournalDate(text) {
   const monthNames = 'Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';
 
-  // "2011 Oct 22;" or "2011 Oct 22,"
   const pat1 = new RegExp('(\\d{4})\\s+(?:' + monthNames + ')\\.?\\s+\\d{1,2}', 'gi');
   text = text.replace(pat1, '$1');
 
-  // "Oct 22, 2011" or "October 22, 2011"
   const pat2 = new RegExp('(?:' + monthNames + ')\\.?\\s+\\d{1,2},?\\s+(\\d{4})', 'gi');
   text = text.replace(pat2, '$1');
 
-  // "2024 Jan;" just month no day
   const pat3 = new RegExp('(\\d{4})\\s+(?:' + monthNames + ')\\.?(?=\\s*;)', 'gi');
   text = text.replace(pat3, '$1');
 
@@ -560,13 +747,14 @@ function isWebSource(text) {
 
 // ========================================
 // FORMAT WEB SOURCE DATES
-// Remove "Published", keep pub date, keep "Accessed [date]"
 // ========================================
 function formatWebDates(text) {
-  // Remove word "Published" but keep the date
+  // Remove "Published online"
+  text = text.replace(/Published\s+online\s+/gi, '');
+  // Remove "Published" (without "online")
   text = text.replace(/Published\s+/gi, '');
 
-  // Ensure month abbreviations are expanded to full names
+  // Expand abbreviated months
   const abbrMap = MONTH_ABBREV_TO_FULL;
   for (const [abbr, full] of Object.entries(abbrMap)) {
     const re = new RegExp('\\b' + abbr.charAt(0).toUpperCase() + abbr.slice(1) + '\\.?\\s+(\\d{1,2})', 'g');
@@ -591,10 +779,209 @@ function removeAvailableFrom(text) {
 }
 
 // ========================================
+// REMOVE PMID / PMCID
+// ========================================
+function removePmid(text) {
+  // Remove PMID: 12345678. or PMID: 12345678 (with or without trailing period)
+  text = text.replace(/\s*PMID:\s*\d+\.?\s*/gi, ' ');
+  text = text.replace(/\s*PMCID:\s*PMC\d+\.?\s*/gi, ' ');
+  text = text.replace(/\s*PMC\d+\.?\s*/g, ' ');
+  return text.trim();
+}
+
+// ========================================
+// FDA CLEANUP
+// ========================================
+function fixFDA(text) {
+  return text.replace(/U\.S\.\s*Food\s+and\s+Drug\s+Administration/gi, 'FDA');
+}
+
+// ========================================
+// FEDERAL DEPT: U.S. -> US
+// ========================================
+function fixUSPrefix(text) {
+  // Change U.S. to US before Department/government terms (not inside titles)
+  return text.replace(/U\.S\.\s+(Department|Bureau|Office|Agency|Commission)/g, 'US $1');
+}
+
+// ========================================
+// PACKAGE INSERT
+// ========================================
+function fixPackageInsert(text) {
+  return text.replace(/\[package\s+insert\]/gi, 'Prescribing information.');
+}
+
+// ========================================
+// ABSTRACT COLON
+// ========================================
+function fixAbstract(text) {
+  // Abstract: 123 -> Abstract 123
+  text = text.replace(/Abstract:\s*(\d+)/gi, 'Abstract $1');
+  return text;
+}
+
+// ========================================
+// PRESENTATIONS
+// ========================================
+function fixPresentations(text) {
+  text = text.replace(/Abstract\s+presented\s+at/gi, 'Presented at');
+  text = text.replace(/Paper\s+presented\s+at/gi, 'Presented at');
+  return text;
+}
+
+// ========================================
+// DUPLICATE COMPANY NAMES
+// ========================================
+function fixDuplicateCompany(text) {
+  // Match patterns like "Company Name. Company Name" or "Company Name, Company Name"
+  return text.replace(/(\b[A-Z][A-Za-z&,.\s]+(?:Inc|LLC|Ltd|Corp|Co|Foundation|Laboratories)\.?)\s*[,;.]?\s*\1/gi, '$1');
+}
+
+// ========================================
+// FIX US STATE ABBREVIATIONS IN CONFERENCE LOCATIONS
+// ========================================
+function fixStateAbbrevs(text) {
+  for (const [name, abbr] of Object.entries(US_STATES)) {
+    // Only match state names that appear after a comma (city, state pattern)
+    const re = new RegExp(',\\s*' + name.replace('.', '\\.') + '(?=[\\s.,;]|$)', 'gi');
+    text = text.replace(re, ', ' + abbr);
+  }
+  return text;
+}
+
+// ========================================
+// AUTHOR CLEANUP
+// ========================================
+function cleanAuthors(authorStr) {
+  let hasEtAl = /et\s+al\.?/i.test(authorStr);
+  let clean = authorStr.replace(/,?\s*et\s+al\.?\s*/gi, '').trim();
+
+  // Split authors by comma, semicolon, or " and "
+  let authors = clean.split(/\s*[,;]\s*|\s+and\s+/i).filter(a => a.trim());
+
+  // Reformat each author
+  authors = authors.map(a => {
+    let parts = a.trim().split(/\s+/);
+    if (parts.length < 2) return a.trim();
+
+    // Remove periods from all parts
+    parts = parts.map(p => p.replace(/\./g, ''));
+
+    // Detect if name is in wrong order (First Last or F Last)
+    // Heuristic: if last part is all caps and 1-3 chars, it's initials -> already correct (Last Initials)
+    // If first part is a single letter or starts lowercase, it might be an initial first
+    const lastPart = parts[parts.length - 1];
+    const firstPart = parts[0];
+
+    // Check if it's "A Winger" or "Susan Doe" format (first-name first)
+    // A name is likely "First Last" if:
+    // - First part is a single uppercase letter (initial) and last part is a longer word
+    // - First part is a capitalized word with >1 char and last part is also capitalized >1 char
+    //   AND first part doesn't look like a surname (we can't really know, but check if last part looks like initials)
+    const lastIsInitials = /^[A-Z]{1,4}$/.test(lastPart);
+    const firstIsInitial = /^[A-Z]$/.test(firstPart);
+
+    if (lastIsInitials) {
+      // Already in "LastName AB" format, just clean up
+      return parts.join(' ');
+    }
+
+    if (firstIsInitial && parts.length === 2) {
+      // "A Winger" -> "Winger A"
+      return lastPart + ' ' + firstPart;
+    }
+
+    // Check for "First Middle Last" or "First Last" where names are spelled out
+    // If all parts are capitalized words (not initials), assume First ... Last order
+    const allCapWords = parts.every(p => /^[A-Z][a-z]+$/.test(p) || /^[A-Z]$/.test(p));
+    if (allCapWords && parts.length >= 2) {
+      const surname = parts[parts.length - 1];
+      const initials = parts.slice(0, -1).map(p => p[0].toUpperCase()).join('');
+      return surname + ' ' + initials;
+    }
+
+    // Default: remove periods, keep as-is
+    return parts.join(' ');
+  });
+
+  // Rule of 3: if 6+ authors, truncate to 3 + et al
+  if (authors.length >= 6) {
+    authors = authors.slice(0, 3);
+    hasEtAl = true;
+  }
+
+  let result = authors.join(', ');
+  if (hasEtAl) result += ', et al';
+
+  return result;
+}
+
+// ========================================
+// FLAG CHECKS
+// ========================================
+function checkFlags(ref, hasDoi, hasUrl, isPresentation) {
+  const flags = [];
+
+  // Check for missing page numbers after issue
+  if (/;\d+\(\d+\)\s*[.:]\s*$/.test(ref) || /;\d+\(\d+\)\s*$/.test(ref)) {
+    flags.push('[FLAG: no page numbers]');
+  }
+  // Also check: has volume(issue) but no colon + pages after
+  const volIssue = ref.match(/;\s*\d+\s*\([^)]+\)/);
+  if (volIssue && !hasDoi && !hasUrl) {
+    const afterVolIssue = ref.slice(ref.indexOf(volIssue[0]) + volIssue[0].length);
+    if (!/:\s*\d/.test(afterVolIssue) && !/:\s*e\d/.test(afterVolIssue)) {
+      flags.push('[FLAG: no page numbers]');
+    }
+  }
+
+  // Check for missing DOI and URL
+  if (!hasDoi && !hasUrl && !isPresentation) {
+    flags.push('[FLAG: no DOI or URL]');
+  }
+
+  // Check for missing accessed date before URL
+  if (hasUrl && !/accessed/i.test(ref)) {
+    flags.push('[FLAG: no accessed date before URL]');
+  }
+
+  // Deduplicate flags
+  return [...new Set(flags)];
+}
+
+// ========================================
+// DUPLICATE DETECTION
+// ========================================
+function detectDuplicates(formattedRefs) {
+  const notes = [];
+  const normalized = formattedRefs.map(r => {
+    // Strip number prefix, doi, url, whitespace for comparison
+    let n = r.replace(/^\d+\.\s*/, '').toLowerCase();
+    n = n.replace(/doi:\S+/g, '').replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim();
+    return n;
+  });
+
+  for (let i = 0; i < normalized.length; i++) {
+    for (let j = i + 1; j < normalized.length; j++) {
+      if (normalized[i] === normalized[j]) {
+        notes.push(`References #${i + 1} and #${j + 1} appear to be duplicates`);
+      } else {
+        // Check for near-duplicates: same first 80 chars
+        const a = normalized[i].substring(0, 80);
+        const b = normalized[j].substring(0, 80);
+        if (a.length > 40 && a === b) {
+          notes.push(`References #${i + 1} and #${j + 1} may be near-duplicates (similar authors and title)`);
+        }
+      }
+    }
+  }
+  return notes;
+}
+
+// ========================================
 // MAIN FORMAT FUNCTION
 // ========================================
 function formatReference(raw) {
-  // Extract leading number if present
   let prefix = '';
   const numMatch = raw.match(/^(\s*\d+[\.\)\]:][\s\t]*)/);
   if (numMatch) {
@@ -605,12 +992,23 @@ function formatReference(raw) {
   let ref = stripNumbering(raw).trim();
   if (!ref) return '';
 
+  // Apply global cleanups first
   ref = removeAvailableFrom(ref);
+  ref = fixFDA(ref);
+  ref = fixUSPrefix(ref);
+  ref = fixPackageInsert(ref);
+  ref = fixAbstract(ref);
+  ref = fixPresentations(ref);
+  ref = fixDuplicateCompany(ref);
+  ref = removePmid(ref);
   ref = formatSupplement(ref);
+  ref = enDashToHyphen(ref);
+  ref = fixStateAbbrevs(ref);
 
   const web = isWebSource(ref);
+  const isPresentation = /presented\s+at/i.test(ref);
 
-  // Extract URL before any other processing
+  // Extract URL before other processing
   let url = '';
   if (web) {
     const urlMatch = ref.match(/(https?:\/\/\S+)/);
@@ -620,13 +1018,13 @@ function formatReference(raw) {
     }
   }
 
-  // Extract DOI before page range fix (so DOI numbers aren't mangled)
+  // Extract DOI
   const { rest: noDoi, doi } = formatDoi(ref);
   ref = noDoi;
 
-  // Convert any en dashes to hyphens, then expand abbreviated page ranges
-  ref = enDashToHyphen(ref);
+  // Fix page ranges (expand abbreviated, collapse identical)
   ref = expandPageRange(ref);
+  ref = collapseIdenticalPages(ref);
 
   if (web) {
     ref = formatWebDates(ref);
@@ -634,7 +1032,7 @@ function formatReference(raw) {
     ref = stripJournalDate(ref);
   }
 
-  // Parse: Authors. Title. Journal. Year;Vol(Issue):Pages
+  // Parse: Authors. Title. Journal+metadata
   const segments = [];
   let temp = '';
   let depth = 0;
@@ -655,9 +1053,13 @@ function formatReference(raw) {
     let title = segments[1];
     let rest = segments.slice(2).join(' ');
 
+    // Clean authors
+    authors = cleanAuthors(authors.replace(/\.\s*$/, '')) + '.';
+
+    // Apply sentence case to title
     title = toSentenceCase(title);
 
-    // Find and italicize journal name
+    // Try to find and italicize journal name
     let journalMatch = rest.match(/^([A-Za-z][A-Za-z\s&\-:,]+?)\.?\s*(?=\d{4}|\d{1,3}\(|;|\s*__URL__|\s*$)/);
     if (journalMatch && journalMatch[1].trim().length > 1) {
       let journalName = abbreviateJournal(journalMatch[1].trim());
@@ -669,11 +1071,14 @@ function formatReference(raw) {
   } else if (segments.length === 2) {
     let authors = segments[0];
     let rest = segments[1];
+    authors = cleanAuthors(authors.replace(/\.\s*$/, '')) + '.';
     const titleJournalSplit = rest.match(/^([^*]+?)\.\s*(.+)$/s);
     if (titleJournalSplit) {
       let title = toSentenceCase(titleJournalSplit[1].trim() + '.');
       let remainder = titleJournalSplit[2].trim();
       ref = authors + ' ' + title + ' ' + remainder;
+    } else {
+      ref = authors + ' ' + rest;
     }
   }
 
@@ -682,7 +1087,7 @@ function formatReference(raw) {
     ref = ref.replace('__URL__', url);
   }
 
-  // Clean up spacing and double periods
+  // Clean up spacing
   ref = ref.replace(/\s{2,}/g, ' ').trim();
   ref = ref.replace(/\.\./g, '.');
   ref = ref.replace(/\s+\./g, '.');
@@ -693,11 +1098,21 @@ function formatReference(raw) {
     ref += '. doi:' + doi;
   }
 
-  // Remove trailing period after DOI
+  // Remove trailing period after DOI or URL
   if (/doi:10\.\S+\.$/.test(ref)) {
     ref = ref.replace(/\.$/, '');
   }
+  if (/https?:\/\/\S+\.$/.test(ref)) {
+    ref = ref.replace(/\.$/, '');
+  }
 
+  // Check flags
+  const flags = checkFlags(ref, !!doi, !!url, isPresentation);
+  if (flags.length > 0) {
+    ref = ref + ' ' + flags.join(' ');
+  }
+
+  // Re-add numbering prefix
   if (prefix) {
     ref = prefix + ref;
   }
@@ -709,6 +1124,7 @@ function formatReference(raw) {
 // UI FUNCTIONS
 // ========================================
 let rawOutput = '';
+let formattedList = [];
 
 function loadSample() {
   document.getElementById('input').value = SAMPLE;
@@ -722,15 +1138,25 @@ function formatRefs() {
   document.getElementById('clearBtn').classList.remove('hidden');
 
   const refs = input.split(/\n/).map(l => l.trim()).filter(l => l);
-
-  const formatted = refs.map(r => formatReference(r)).filter(r => r);
-  rawOutput = formatted.join('\n\n');
+  formattedList = refs.map(r => formatReference(r)).filter(r => r);
+  rawOutput = formattedList.join('\n\n');
 
   renderOutput(rawOutput);
   document.getElementById('outputSection').classList.remove('hidden');
   document.getElementById('outputSection').classList.add('output-section');
   document.getElementById('copyRichBtn').classList.remove('hidden');
   document.getElementById('copyPlainBtn').classList.remove('hidden');
+
+  // Check for duplicates
+  const dupNotes = detectDuplicates(formattedList);
+  const dupSection = document.getElementById('dupSection');
+  const dupNotesDiv = document.getElementById('dupNotes');
+  if (dupNotes.length > 0) {
+    dupNotesDiv.innerHTML = dupNotes.map(n => '<p>' + n + '</p>').join('');
+    dupSection.classList.remove('hidden');
+  } else {
+    dupSection.classList.add('hidden');
+  }
 }
 
 function renderOutput(text) {
@@ -739,14 +1165,17 @@ function renderOutput(text) {
   text.split('\n').forEach(line => {
     if (!line.trim()) return;
     const p = document.createElement('p');
-    p.innerHTML = line.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+    // Render *text* as italic, [FLAG: ...] as styled spans
+    let html = line.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+    html = html.replace(/\[FLAG:\s*([^\]]+)\]/g, '<span class="flag">[FLAG: $1]</span>');
+    p.innerHTML = html;
     container.appendChild(p);
   });
 }
 
 function copyRich() {
   const lines = rawOutput.split('\n').filter(l => l.trim());
-  const html = lines.map(line => '<p>' + line.replace(/\*([^*]+)\*/g, '<i>$1</i>') + '</p>').join('');
+  const html = lines.map(line => '<p>' + line.replace(/\*([^*]+)\*/g, '<i>$1</i>').replace(/\[FLAG:\s*([^\]]+)\]/g, '<b>[FLAG: $1]</b>') + '</p>').join('');
   const plain = rawOutput.replace(/\*/g, '');
   navigator.clipboard.write([
     new ClipboardItem({
@@ -766,7 +1195,7 @@ function flashCopied(id) {
   const btn = document.getElementById(id);
   const orig = btn.textContent;
   btn.classList.add('btn-copied');
-  btn.textContent = 'Copied ✓';
+  btn.textContent = 'Copied \u2713';
   setTimeout(() => { btn.classList.remove('btn-copied'); btn.textContent = orig; }, 2000);
 }
 
@@ -776,7 +1205,9 @@ function clearAll() {
   document.getElementById('copyRichBtn').classList.add('hidden');
   document.getElementById('copyPlainBtn').classList.add('hidden');
   document.getElementById('clearBtn').classList.add('hidden');
+  document.getElementById('dupSection').classList.add('hidden');
   rawOutput = '';
+  formattedList = [];
 }
 </script>
 
